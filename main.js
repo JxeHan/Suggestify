@@ -26,7 +26,17 @@ client.cooldowns = new Discord.Collection();
 client.login(config.token).then(() => {
     console.clear();
     console.log(('Logged in as: ' + client.user.username + ` [${config.id}]`).brightCyan);
-    client.user.setPresence({ activities: [{ name: config.status, type: ActivityType.Playing }]});
+    const statusList = [
+        'Use /help to get started.',
+        'Join our support server!',
+        'Vote for Suggestify for rewards!'
+      ];
+      // Rotate status every 3 seconds
+        setInterval(() => {
+          const randomIndex = Math.floor(Math.random() * statusList.length);
+          const { ActivityType } = require('discord.js')
+          client.user.setActivity(statusList[randomIndex], { type: ActivityType.Playing }) // Competing, Listening, etc
+        }, 5000);
     //client.user.setPresence({
         //activities: [{
             //type: ActivityType.Custom,

@@ -6,7 +6,7 @@ module.exports = {
     developer: '1161617296402423898',
     errorWebhookUrl: 'https://discord.com/api/webhooks/1237797300626264094/0fT2hUFGyQVPvGA76KcYRbw7kb5obY16qqGnWJU8uMbaFjjgUzsmQcMLNhgVrcluORa0',
     database: 'mongodb+srv://jxster644:mancityfan12@jx7.xxq4z1q.mongodb.net/',
-    HexColour: 'Blurple',
+    colour: 'Blurple',
     developerOnlyReply: 'Only developers can use this command.',
     interactionErrorReply: 'Command execution error.',
 }

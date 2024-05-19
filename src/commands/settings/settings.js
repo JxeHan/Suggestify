@@ -4,115 +4,124 @@ const config = require('../../../config');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('settings')
+        .setName('suggestion')
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
         .setDescription('Manage suggestion settings')
         .addSubcommand(subcommand =>
             subcommand
-                .setName('channel')
-                .setDescription('Sets the channel for suggestions')
+                .setName('config')
+                .setDescription('Configure suggestion settings')
                 .addChannelOption(option =>
                     option.setName('channel')
                         .setDescription('The channel to send suggestions to')
                         .setRequired(true)
                 )
-        )
-        .addSubcommand(subcommand =>
-            subcommand
-                .setName('roles')
-                .setDescription('Sets the roles to be mentioned for each suggestion')
                 .addRoleOption(option =>
-                    option.setName('role')
-                        .setDescription('The role to mention')
+                    option.setName('mention')
+                        .setDescription('The role to mention for each suggestion')
                         .setRequired(true)
                 )
         )
         .addSubcommand(subcommand =>
             subcommand
-                .setName('show')
-                .setDescription('Show current settings')
+                .setName('info')
+                .setDescription('Show current configuration settings')
         )
         .addSubcommand(subcommand =>
             subcommand
-                .setName('role-remove')
-                .setDescription('Remove a role from suggestion settings')
-                .addRoleOption(option =>
-                    option.setName('role')
-                        .setDescription('The role to remove')
+                .setName('erase')
+                .setDescription('Erase configured settings')
+                .addStringOption(option =>
+                    option.setName('setting')
+                        .setDescription('The setting to erase')
+                        .setRequired(true)
+                        .addChoices(
+                            { name: 'Channel', value: 'channel' },
+                            { name: 'Role', value: 'mention' }
+                        )
+                    )                        
+                .addBooleanOption(option =>
+                    option.setName('remove')
+                        .setDescription('Set to true to remove the setting, false to keep it')
                         .setRequired(true)
                 )
-        )
-        .addSubcommand(subcommand =>
-            subcommand
-                .setName('channel-remove')
-                .setDescription('Remove the suggestion channel')
         ),
     async execute(interaction) {
         try {
-            if (interaction.options.getSubcommand() === 'channel') {
+            if (interaction.options.getSubcommand() === 'config') {
                 const channel = interaction.options.getChannel('channel');
+                const role = interaction.options.getRole('mention');
+
                 if (!channel.isTextBased()) {
                     return interaction.reply({ content: 'Please select a text-based channel.', ephemeral: true });
                 }
 
                 await SuggestionSettings.findOneAndUpdate(
                     { guildId: interaction.guild.id },
-                    { channelId: channel.id },
+                    { channelId: channel.id, $addToSet: { roles: role.id } }, // Using $addToSet to avoid duplicates
                     { upsert: true }
                 );
 
                 const embed = new EmbedBuilder()
-                    .setDescription(`:white_check_mark: Suggestions will be sent to ${channel}.`)
-                    .setColor(config.HexColour);
-
-                return interaction.reply({ embeds: [embed] });
-            } else if (interaction.options.getSubcommand() === 'roles') {
-                const role = interaction.options.getRole('role');
-
-                await SuggestionSettings.findOneAndUpdate(
-                    { guildId: interaction.guild.id },
-                    { $addToSet: { roles: role.id } }, // Using $addToSet to avoid duplicates
-                    { upsert: true }
-                );
-
-                const embed = new EmbedBuilder()
-                    .setDescription(`:white_check_mark: ${role} will be mentioned for each suggestion sent.`)
-                    .setColor(config.HexColour);
-
-                return interaction.reply({ embeds: [embed] });
-            } else if (interaction.options.getSubcommand() === 'show') {
-                const settings = await SuggestionSettings.findOne({ guildId: interaction.guild.id });
-                
-                const channelValue = settings ? `<#${settings.channelId}>` : ':x:';
-                const rolesValue = settings && settings.roles.length > 0 ? settings.roles.map(roleId => `<@&${roleId}>`).join(', ') : ':x:';
-                
-                const embed = new EmbedBuilder()
-                    .setColor(config.HexColour)
-                    .setTitle('Suggestion Settings')
+                    .setTitle('<a:check_green:1240349082149715978> Suggestion Configuration Saved')
                     .addFields(
-                        { name: 'Channel', value: channelValue },
-                        { name: 'Roles', value: rolesValue }
-                    );
-                
+                        { name: 'Channel', value: `${channel}`, inline: true },
+                        { name: 'Roles', value: `${role}`, inline: true }
+                    )
+                    .setColor(config.colour);
+
                 return interaction.reply({ embeds: [embed] });
-            } else if (interaction.options.getSubcommand() === 'role-remove') {
-                const roleToRemove = interaction.options.getRole('role');
+            } else if (interaction.options.getSubcommand() === 'info') {
+                const settings = await SuggestionSettings.findOne({ guildId: interaction.guild.id });
 
-                await SuggestionSettings.updateOne(
-                    { guildId: interaction.guild.id },
-                    { $pull: { roles: roleToRemove.id } }
-                );
+                const channelValue = settings ? `<#${settings.channelId}>` : '<a:x_red:1240354262387654707>';
+                const rolesValue = settings && settings.roles.length > 0 ? settings.roles.map(roleId => `<@&${roleId}>`).join(', ') : '<a:x_red:1240354262387654707>';
 
-                return interaction.reply({ content: `:white_check_mark: Suggestion ping role removed.`, ephemeral: true });
-            } else if (interaction.options.getSubcommand() === 'channel-remove') {
-                await SuggestionSettings.deleteOne({ guildId: interaction.guild.id });
+                const embed = new EmbedBuilder()
+                    .setColor(config.colour)
+                    .setTitle('<a:settings:1241714255984595036> Suggestion Information')
+                    .addFields(
+                        { name: 'Channel', value: channelValue, inline: true },
+                        { name: 'Roles', value: rolesValue, inline: true }
+                    );
 
-                return interaction.reply({ content: `:white_check_mark: Suggestion channel removed.`, ephemeral: true });
+                return interaction.reply({ embeds: [embed] });
+            } else if (interaction.options.getSubcommand() === 'erase') {
+                const setting = interaction.options.getString('setting');
+                const remove = interaction.options.getBoolean('remove');
+
+                if (setting === 'channel') {
+                    if (remove) {
+                        await SuggestionSettings.findOneAndDelete({ guildId: interaction.guild.id });
+                        const eraseEmbed = new EmbedBuilder()
+                        .setColor(config.colour)
+                        .setDescription(`<a:check_green:1240349082149715978> Successfully removed **${setting}**.`)
+                        await interaction.reply({ embeds: [eraseEmbed], ephemeral: true });
+                    } else {
+                        const keptEmbed = new EmbedBuilder()
+                        .setColor(config.colour)
+                        .setDescription(`<a:check_green:1240349082149715978> Successfully kept **${setting}**.`)
+                        await interaction.reply({ embeds: [keptEmbed],  ephemeral: true });
+                    }
+                } else if (setting === 'role') {
+                    if (remove) {
+                        await SuggestionSettings.findOneAndUpdate({ guildId: interaction.guild.id }, { roles: [] });
+                        const eraseEmbed = new EmbedBuilder()
+                        .setColor(config.colour)
+                        .setDescription(`<a:check_green:1240349082149715978> Successfully removed **${setting}**.`)
+                        await interaction.reply({ embeds: [eraseEmbed], ephemeral: true });
+                    } else {
+                        const kepttEmbed = new EmbedBuilder()
+                        .setColor(config.colour)
+                        .setDescription(`<a:check_green:1240349082149715978> Successfully kept **${setting}**.`)
+                        await interaction.reply({ embeds: [kepttEmbed],  ephemeral: true });
+                    }
+                }
             }
         } catch (error) {
             console.error('Error managing suggestion settings:', error);
             const errorEmbed = new EmbedBuilder()
-                .setColor(config.HexColour)
+                .setColor(config.colour)
                 .setDescription('There was an error managing suggestion settings. Please try again later.');
 
             await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
