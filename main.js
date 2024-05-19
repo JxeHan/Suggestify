@@ -26,7 +26,7 @@ client.cooldowns = new Discord.Collection();
 client.login(config.token).then(() => {
     console.clear();
     console.log(('Logged in as: ' + client.user.username + ` [${config.id}]`).brightCyan);
-    //client.user.setPresence({ activities: [{ name: config.status, type: ActivityType.Playing }]});
+    client.user.setPresence({ activities: [{ name: config.status, type: ActivityType.Playing }]});
     //client.user.setPresence({
         //activities: [{
             //type: ActivityType.Custom,
