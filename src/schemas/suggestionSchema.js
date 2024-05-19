@@ -1,9 +1,9 @@
-// models/SuggestionChannel.js
-const mongoose = require('mongoose');
+const { Schema, model, mongoose } = require('mongoose');
 
-const suggestionChannelSchema = new mongoose.Schema({
+const suggestionSchemaa = new Schema({
     guildId: { type: String, required: true, unique: true },
-    channelId: { type: String, required: true }
+    channelId: { type: String, required: true },
+    roles: { type: [String], default: [] },
 });
 
-module.exports = mongoose.model('SuggestionSchema', suggestionChannelSchema);
+module.exports = mongoose.model('SuggestionSchema', suggestionSchemaa);
