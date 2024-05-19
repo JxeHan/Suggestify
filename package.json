@@ -1,0 +1,27 @@
+{
+    "name": "Suggestify",
+    "version": "2.0.0",
+    "description": "Suggestify a friendly Discord suggestion bot.",
+    "main": "main.js",
+    "scripts": {
+        "test": "echo \"Wow is this a test?\" && exit 1",
+        "start": "node ."
+    },
+    "keywords": [],
+    "author": "izexi",
+    "license": "GPL-3.0",
+    "dependencies": {
+        "@colors/colors": "^1.6.0",
+        "axios": "^1.6.7",
+        "chalk": "^2.4.2",
+        "chrono-node": "^2.7.5",
+        "config": "^3.3.11",
+        "dayjs": "^1.11.10",
+        "discord.js": "^14.15.2",
+        "discord.js-anticrash": "^2.0.1",
+        "djs-builder": "^0.2.9",
+        "mongoose": "^7.3.1",
+        "node-emoji": "^2.1.3",
+        "rsnchat": "^4.0.0"
+    }
+}
