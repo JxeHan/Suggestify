@@ -18,12 +18,12 @@ module.exports = {
             const suggestionChannelData = await SuggestionChannel.findOne({ guildId: interaction.guild.id });
 
             if (!suggestionChannelData) {
-                return interaction.reply({ content: 'Suggestion channel has not been set up.', ephemeral: true });
+                return interaction.reply({ content: ':x: Suggestion channel has not been set up.', ephemeral: true });
             }
 
             const suggestionChannel = interaction.client.channels.cache.get(suggestionChannelData.channelId);
             if (!suggestionChannel) {
-                return interaction.reply({ content: 'Suggestion channel not found.', ephemeral: true });
+                return interaction.reply({ content: ':warning: Suggestion channel not found.', ephemeral: true });
             }
 
             let rolesToMention = '';
@@ -46,7 +46,6 @@ module.exports = {
             const suggestionMessage = await suggestionChannel.send({ content: rolesToMention, embeds: [suggestionEmbed] });
 
             await suggestionMessage.react('👍');
-            await suggestionMessage.react('🤷‍♂️');
             await suggestionMessage.react('👎');
 
             const confirmationEmbed = new EmbedBuilder()
