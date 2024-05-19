@@ -39,7 +39,7 @@ module.exports = {
                 .setAuthor({ name: `Suggestion from ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) })
                 .setFooter({ text: `Suggestion ID: ${suggestionId} | Submitted at` })
                 .addFields(
-                    { name: 'Votes', value: `Upvotes: \`0\`\nDownVotes: \`0\`` },
+                    { name: 'Votes', value: `Upvotes: \`0\`\nDownVotes: \`0\`` }, // vote tracking still needs fixing
                 )     
                 .setTimestamp();
                 
