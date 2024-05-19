@@ -13,7 +13,6 @@ const {
 // Handlers
 const { loadEvents } = require('./src/handlers/events');
 const { loadCommands } = require('./src/handlers/commands');
-const   reminderEvent  = require('./src/events/Interactions/reminderEvent');
 
 // Discord client setup
 const client = new Client({ intents: 3276799 });
@@ -27,7 +26,7 @@ client.cooldowns = new Discord.Collection();
 client.login(config.token).then(() => {
     console.clear();
     console.log(('Logged in as: ' + client.user.username + ` [${config.id}]`).brightCyan);
-    client.user.setPresence({ activities: [{ name: config.status, type: ActivityType.Playing }]});
+    //client.user.setPresence({ activities: [{ name: config.status, type: ActivityType.Playing }]});
     //client.user.setPresence({
         //activities: [{
             //type: ActivityType.Custom,
@@ -45,7 +44,6 @@ client.login(config.token).then(() => {
         // Loading events and commands
         loadEvents(client);
         loadCommands(client);
-        reminderEvent(client);
 
     });
 }).catch((err) => console.log(err));
