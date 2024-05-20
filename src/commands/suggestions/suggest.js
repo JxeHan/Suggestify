@@ -142,7 +142,7 @@ module.exports = {
                 confirmationEmbed.setImage(attachmentLink);
             }
 
-            await interaction.reply({ content: '<a:check_green:1240349082149715978> Your suggestion has been submitted anonymously to the server staff for review!', embeds: [confirmationEmbed], ephemeral: true });
+            await interaction.reply({ content: '<a:check_green:1240349082149715978> Your suggestion has been submitted to the server staff for review!', embeds: [confirmationEmbed], ephemeral: true });
         } catch (error) {
             console.error('[SUGGESTION]', error);
             const errorEmbed = new EmbedBuilder()
