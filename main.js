@@ -28,7 +28,7 @@ client.login(config.token).then(() => {
     console.log(('Logged in as: ' + client.user.username + ` [${config.id}]`).brightCyan);
     const statusList = [
         'Use /help to get started.',
-        'Join our support server!',
+        'Join our support server - https://discord.gg/dKgrYcEx',
         'Vote for Suggestify for rewards!'
       ];
       // Rotate status every 3 seconds
