@@ -1,4 +1,3 @@
-// commands/suggestion/asuggest.js
 const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
 const generateId = require('../../utils/generateId');
 const SuggestionChannel = require('../../schemas/suggestionSchema');
@@ -9,7 +8,7 @@ module.exports = {
     cooldown: 7,
     data: new SlashCommandBuilder()
         .setName('asuggest')
-        .setDescription('Submit an anonymous suggestion')
+        .setDescription('Submit an anonymous suggestion to the server')
         .addStringOption(option =>
             option.setName('suggestion')
                 .setDescription('Content of suggestion')
@@ -24,19 +23,17 @@ module.exports = {
             const attachmentLink = interaction.options.getString('attachment');
             const suggestionChannelData = await SuggestionChannel.findOne({ guildId: interaction.guild.id });
 
-            if (!suggestionChannelData) {
-                return interaction.reply({ content: '<a:x_red:1240354262387654707> Suggestion channel has not been set up.', ephemeral: true });
+            const settings = await AnonymousSuggestionSettings.findOne({ guildId: interaction.guild.id });
+            if (!settings || !settings.anonymousEnabled) {
+                return interaction.reply({ content: '<a:x_red:1240354262387654707> Anonymous suggestions are not **enabled** in this server.', ephemeral: true });
             }
 
             const suggestionChannel = interaction.client.channels.cache.get(suggestionChannelData.channelId);
             if (!suggestionChannel) {
-                return interaction.reply({ content: ':warning: Suggestion channel not found.', ephemeral: true });
+                return interaction.reply({ content: '<a:x_red:1240354262387654707> Suggestion channel has not been setup.', ephemeral: true });
             }
 
-            const settings = await AnonymousSuggestionSettings.findOne({ guildId: interaction.guild.id });
-            if (!settings || !settings.anonymousEnabled) {
-                return interaction.reply({ content: '<a:x_red:1240354262387654707> Anonymous suggestions are not enabled.', ephemeral: true });
-            }
+            
 
             let rolesToMention = '';
             if (suggestionChannelData.roles && suggestionChannelData.roles.length > 0) {
