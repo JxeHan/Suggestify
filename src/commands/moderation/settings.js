@@ -30,11 +30,11 @@ module.exports = {
         )
         .addSubcommand(subcommand =>
             subcommand
-                .setName('erase')
-                .setDescription('Erase configured settings')
+                .setName('remove')
+                .setDescription('Eemove configured settings')
                 .addStringOption(option =>
                     option.setName('setting')
-                        .setDescription('The setting to erase')
+                        .setDescription('The setting to remove')
                         .setRequired(true)
                         .addChoices(
                             { name: 'Channel', value: 'channel' },
@@ -42,7 +42,7 @@ module.exports = {
                         )
                 )
                 .addBooleanOption(option =>
-                    option.setName('remove')
+                    option.setName('toggle')
                         .setDescription('Set to true to remove the setting, false to keep it')
                         .setRequired(true)
                 )
@@ -53,7 +53,7 @@ module.exports = {
                 .setDescription('Enable or disable suggestions')
                 .addStringOption(option =>
                     option.setName('setting')
-                        .setDescription('The setting to enable or disable')
+                        .setDescription('The setting to enable or remove')
                         .setRequired(true)
                         .addChoices(
                             { name: 'Suggestions', value: 'normal' },
@@ -61,8 +61,8 @@ module.exports = {
                         )
                 )
                 .addBooleanOption(option =>
-                    option.setName('enabled')
-                        .setDescription('Set to true to enable, false to disable')
+                    option.setName('toggle')
+                        .setDescription('Set to true to enable, false to remove')
                         .setRequired(true)
                 )
         ),
@@ -75,7 +75,7 @@ module.exports = {
                 const role = interaction.options.getRole('mention');
 
                 if (!channel.isTextBased()) {
-                    return interaction.reply({ content: 'Please select a text-based channel.', ephemeral: true });
+                    return interaction.reply({ content: 'Please select a **text-based** channel.', ephemeral: true });
                 }
 
                 const updateData = { channelId: channel.id };
@@ -93,7 +93,7 @@ module.exports = {
                     .setTitle('<a:check_green:1240349082149715978> Suggestion Configuration Saved')
                     .addFields(
                         { name: 'Channel', value: channel ? `${channel}` : '<a:x_red:1240354262387654707>', inline: true },
-                        { name: 'Roles', value: role ? `${role}` : '<a:x_red:1240354262387654707>', inline: true }
+                        { name: 'Mentions', value: role ? `${role}` : '<a:x_red:1240354262387654707>', inline: true }
                     )
                     .setColor(config.colour);
 
@@ -109,10 +109,10 @@ module.exports = {
                     : '<a:x_red:1240354262387654707>';
                 const anonymousValue = anonymousSettings && anonymousSettings.anonymousEnabled
                     ? '<:enabled:1240387020740624617> (enabled)'
-                    : '<:disabled:1240387309510332595> (disabled)';
+                    : '<:disbaled:1240387309510332595> (disbaled)';
                 const normalValue = settings && settings.suggestionsEnabled
                     ? '<:enabled:1240387020740624617> (enabled)'
-                    : '<:disabled:1240387309510332595> (disabled)';
+                    : '<:disbaled:1240387309510332595> (disbaled)';
 
                 const embed = new EmbedBuilder()
                     .setColor(config.colour)
@@ -126,9 +126,9 @@ module.exports = {
 
                 return interaction.reply({ embeds: [embed] });
 
-            } else if (interaction.options.getSubcommand() === 'erase') {
+            } else if (interaction.options.getSubcommand() === 'remove') {
                 const setting = interaction.options.getString('setting');
-                const remove = interaction.options.getBoolean('remove');
+                const remove = interaction.options.getBoolean('toggle');
 
                 if (setting === 'channel') {
                     if (remove) {
@@ -136,7 +136,7 @@ module.exports = {
                     }
                     const embed = new EmbedBuilder()
                         .setColor(config.colour)
-                        .setDescription(`<a:check_green:1240349082149715978> Successfully ${remove ? 'removed' : 'kept'} **channel** setting.`);
+                        .setDescription(`<a:check_green:1240349082149715978> Successfully ${remove ? 'disbaled' : 'kept'} suggestion **channel** setting.`);
 
                     await interaction.reply({ embeds: [embed], ephemeral: true });
                 } else if (setting === 'mention') {
@@ -145,13 +145,13 @@ module.exports = {
                     }
                     const embed = new EmbedBuilder()
                         .setColor(config.colour)
-                        .setDescription(`<a:check_green:1240349082149715978> Successfully ${remove ? 'removed' : 'kept'} **role** setting.`);
+                        .setDescription(`<a:check_green:1240349082149715978> Successfully ${remove ? 'disbaled' : 'kept'} suggestion **mention** setting.`);
 
                     await interaction.reply({ embeds: [embed], ephemeral: true });
                 }
             } else if (interaction.options.getSubcommand() === 'enable') {
                 const setting = interaction.options.getString('setting');
-                const enabled = interaction.options.getBoolean('enabled');
+                const enabled = interaction.options.getBoolean('toggle');
 
                 if (setting === 'anonymous') {
                     await AnonymousSuggestionSettings.findOneAndUpdate(
@@ -162,7 +162,7 @@ module.exports = {
 
                     const embed = new EmbedBuilder()
                         .setColor(config.colour)
-                        .setDescription(`${enabled ? '<:enabled:1240387020740624617> Anonymous suggestions enabled.' : '<:disabled:1240387309510332595> Anonymous suggestions disabled.'}`);
+                        .setDescription(`${enabled ? '<:enabled:1240387020740624617> Anonymous suggestions **enabled**.' : '<:disbaled:1240387309510332595> Anonymous suggestions **disbaled**.'}`);
 
                     return interaction.reply({ embeds: [embed], ephemeral: true });
                 } else if (setting === 'normal') {
@@ -174,7 +174,7 @@ module.exports = {
 
                     const embed = new EmbedBuilder()
                         .setColor(config.colour)
-                        .setDescription(`${enabled ? '<:enabled:1240387020740624617> Suggestions enabled.' : '<:disabled:1240387309510332595> Suggestions disabled.'}`);
+                        .setDescription(`${enabled ? '<:enabled:1240387020740624617> Suggestions **enabled**.' : '<:disbaled:1240387309510332595> Suggestions **disbaled**.'}`);
 
                     return interaction.reply({ embeds: [embed], ephemeral: true });
                 }

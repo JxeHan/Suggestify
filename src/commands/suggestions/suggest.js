@@ -1,14 +1,14 @@
-const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const generateId = require('../../utils/generateId');
 const SuggestionChannel = require('../../schemas/suggestionSchema');
-const SuggestionSettings = require('../../schemas/suggestionSchema');
+const SuggestionSettings = require('../../schemas/suggestionSchema'); // Assuming you're using the same schema for both normal and anonymous suggestions
 const config = require('../../../config');
 
 module.exports = {
     cooldown: 7,
     data: new SlashCommandBuilder()
         .setName('suggest')
-        .setDescription('Submit a suggestion to the server')
+        .setDescription('Submit a suggestion')
         .addStringOption(option =>
             option.setName('suggestion')
                 .setDescription('Content of suggestion')
@@ -26,9 +26,8 @@ module.exports = {
             // Check if suggestions are enabled
             const settings = await SuggestionSettings.findOne({ guildId: interaction.guild.id });
             if (!settings || !settings.suggestionsEnabled) {
-            return interaction.reply({ content: '<a:x_red:1240354262387654707> Suggestions are not **enabled** in this server.', ephemeral: true });
+                return interaction.reply({ content: '<a:x_red:1240354262387654707> Suggestions are not **enabled** in this server.', ephemeral: true });
             }
-
 
             const suggestionChannel = interaction.client.channels.cache.get(suggestionChannelData.channelId);
             if (!suggestionChannel) {
@@ -61,6 +60,12 @@ module.exports = {
             await suggestionMessage.react('👍');
             await suggestionMessage.react('👎');
 
+            // Save suggestion ID to the schema
+            suggestionChannelData.suggestionIds.push(suggestionId);
+            suggestionChannelData.content = suggestion; // Save the content of the suggestion
+            suggestionChannelData.submittedBy = interaction.user.id; // Save the ID of the user who submitted the suggestion
+            await suggestionChannelData.save();
+
             // Event listener for reaction add/remove
             const collector = suggestionMessage.createReactionCollector({ dispose: true });
 
@@ -78,7 +83,12 @@ module.exports = {
             collector.on('collect', async (reaction, user) => {
                 if (user.bot) return;
                 try {
-                    await reaction.message.fetch();
+                    const oppositeReaction = reaction.emoji.name === '👍' ? '👎' : '👍';
+                    const oppositeReactionObj = reaction.message.reactions.cache.find(r => r.emoji.name === oppositeReaction);
+
+                    if (oppositeReactionObj && oppositeReactionObj.users.cache.has(user.id)) {
+                        await oppositeReactionObj.users.remove(user.id);
+                    }
 
                     const upvotes = reaction.message.reactions.cache.get('👍').count - 1;
                     const downvotes = reaction.message.reactions.cache.get('👎').count - 1;
@@ -106,8 +116,6 @@ module.exports = {
             collector.on('remove', async (reaction, user) => {
                 if (user.bot) return;
                 try {
-                    await reaction.message.fetch();
-
                     const upvotes = reaction.message.reactions.cache.get('👍').count - 1;
                     const downvotes = reaction.message.reactions.cache.get('👎').count - 1;
 
@@ -142,7 +150,7 @@ module.exports = {
                 confirmationEmbed.setImage(attachmentLink);
             }
 
-            await interaction.reply({ content: '<a:check_green:1240349082149715978> Your suggestion has been submitted to the server staff for review!', embeds: [confirmationEmbed], ephemeral: true });
+            await interaction.reply({ content: '<a:check_green:1240349082149715978> Your suggestion has been submitted to the server staff for review!', embeds: [confirmationEmbed] });
         } catch (error) {
             console.error('[SUGGESTION]', error);
             const errorEmbed = new EmbedBuilder()

@@ -1,4 +1,4 @@
-const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const generateId = require('../../utils/generateId');
 const SuggestionChannel = require('../../schemas/suggestionSchema');
 const AnonymousSuggestionSettings = require('../../schemas/anonymousSuggestionSchema');
@@ -8,7 +8,7 @@ module.exports = {
     cooldown: 7,
     data: new SlashCommandBuilder()
         .setName('asuggest')
-        .setDescription('Submit an anonymous suggestion to the server')
+        .setDescription('Submit an anonymous suggestion')
         .addStringOption(option =>
             option.setName('suggestion')
                 .setDescription('Content of suggestion')
@@ -17,12 +17,13 @@ module.exports = {
             option.setName('attachment')
                 .setDescription('Link to attachment')
                 .setRequired(false)),
-    async execute(interaction) {
+    async execute(interaction, client) {
         try {
             const suggestion = interaction.options.getString('suggestion');
             const attachmentLink = interaction.options.getString('attachment');
             const suggestionChannelData = await SuggestionChannel.findOne({ guildId: interaction.guild.id });
 
+            // Check if anonymous suggestions are enabled
             const settings = await AnonymousSuggestionSettings.findOne({ guildId: interaction.guild.id });
             if (!settings || !settings.anonymousEnabled) {
                 return interaction.reply({ content: '<a:x_red:1240354262387654707> Anonymous suggestions are not **enabled** in this server.', ephemeral: true });
@@ -30,10 +31,8 @@ module.exports = {
 
             const suggestionChannel = interaction.client.channels.cache.get(suggestionChannelData.channelId);
             if (!suggestionChannel) {
-                return interaction.reply({ content: '<a:x_red:1240354262387654707> Suggestion channel has not been setup.', ephemeral: true });
+                return interaction.reply({ content: '<a:x_red:1240354262387654707> Suggestion channel has not been set up.', ephemeral: true });
             }
-
-            
 
             let rolesToMention = '';
             if (suggestionChannelData.roles && suggestionChannelData.roles.length > 0) {
@@ -44,6 +43,7 @@ module.exports = {
             const suggestionEmbed = new EmbedBuilder()
                 .setColor(config.colour)
                 .setDescription(suggestion)
+                .setAuthor({ name: 'Anonymous Suggestion', iconURL: client.user.displayAvatarURL() })
                 .setFooter({ text: `Suggestion ID: ${suggestionId} | Submitted at` })
                 .addFields(
                     { name: 'Votes', value: `Total: **0**\nUpvotes: **0** \`0%\`\nDownvotes: **0** \`0%\`` }
@@ -58,6 +58,12 @@ module.exports = {
 
             await suggestionMessage.react('👍');
             await suggestionMessage.react('👎');
+
+            // Save suggestion ID to the schema
+            suggestionChannelData.suggestionIds.push(suggestionId);
+            suggestionChannelData.content = suggestion; // Save the content of the suggestion
+            suggestionChannelData.submittedBy = interaction.user.id; // Save the ID of the user who submitted the suggestion
+            await suggestionChannelData.save();
 
             // Event listener for reaction add/remove
             const collector = suggestionMessage.createReactionCollector({ dispose: true });
@@ -76,7 +82,12 @@ module.exports = {
             collector.on('collect', async (reaction, user) => {
                 if (user.bot) return;
                 try {
-                    await reaction.message.fetch();
+                    const oppositeReaction = reaction.emoji.name === '👍' ? '👎' : '👍';
+                    const oppositeReactionObj = reaction.message.reactions.cache.find(r => r.emoji.name === oppositeReaction);
+
+                    if (oppositeReactionObj && oppositeReactionObj.users.cache.has(user.id)) {
+                        await oppositeReactionObj.users.remove(user.id);
+                    }
 
                     const upvotes = reaction.message.reactions.cache.get('👍').count - 1;
                     const downvotes = reaction.message.reactions.cache.get('👎').count - 1;
@@ -132,6 +143,7 @@ module.exports = {
             const confirmationEmbed = new EmbedBuilder()
                 .setColor(config.colour)
                 .setDescription(suggestion)
+                .setAuthor({ name: 'Anonymous Suggestion', iconURL: client.user.displayAvatarURL() })
                 .setFooter({ text: `Suggestion ID: ${suggestionId} | Submitted at` })
                 .setTimestamp();
 
@@ -139,7 +151,7 @@ module.exports = {
                 confirmationEmbed.setImage(attachmentLink);
             }
 
-            await interaction.reply({ content: '<a:check_green:1240349082149715978> Your suggestion has been submitted anonymously to the server staff for review!', embeds: [confirmationEmbed], ephemeral: true });
+            await interaction.reply({ content: '<a:check_green:1240349082149715978> Your anonymous suggestion has been submitted to the server staff for review!', embeds: [confirmationEmbed], ephemeral: true });
         } catch (error) {
             console.error('[SUGGESTION]', error);
             const errorEmbed = new EmbedBuilder()
