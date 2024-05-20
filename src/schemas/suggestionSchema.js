@@ -1,4 +1,4 @@
-const { Schema, model, mongoose } = require('mongoose');
+const { Schema, model } = require('mongoose');
 
 const suggestionSchemaa = new Schema({
     guildId: { type: String, required: true, unique: true },
@@ -7,4 +7,4 @@ const suggestionSchemaa = new Schema({
     roles: { type: [String], default: [] },
 });
 
-module.exports = mongoose.model('SuggestionSchema', suggestionSchemaa);
+module.exports = model('SuggestionSchema', suggestionSchemaa);

@@ -1,4 +1,3 @@
-// schemas/anonymousSuggestionSchema.js
 const { Schema, model } = require('mongoose');
 
 const anonymousSuggestionSchema = new Schema({
