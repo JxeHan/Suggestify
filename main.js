@@ -57,3 +57,43 @@ client.login(config.token).then(() => {
 
     });
 }).catch((err) => console.log(err));
+
+client.on(Events.InteractionCreate, async (interaction) => {
+    if (interaction.isCommand()) {
+        const command = client.commands.get(interaction.commandName);
+        if (!command) return;
+        try {
+            await command.execute(interaction);
+        } catch (error) {
+           console.error(error);
+        }
+    } else if (interaction.isModalSubmit()) {
+        if (interaction.customId === 'feedbackModal') {
+            // Extract the feedback from the modal submission
+            const feedback = interaction.fields.getTextInputValue('feedbackInput');
+
+            // Fetch the feedback channel
+            const feedbackChannelId = '1242218788879859772'; // Replace with your feedback channel ID
+            const feedbackChannel = await client.channels.fetch(feedbackChannelId);
+            
+            // Send feedback to the specified channel
+            if (feedbackChannel && feedbackChannel.isTextBased()) {
+                const feedbackEmbed = new EmbedBuilder()
+                    .setTitle('New Feedback')
+                    .setDescription(`\`\`\`${feedback}\`\`\``)
+                    .setColor('Blurple')
+                    .setThumbnail(interaction.user.displayAvatarURL())
+                    .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) })
+                    .setFooter(
+                        { text: 'Feedback submitted at'}
+                    )
+                    .setTimestamp();
+
+                await feedbackChannel.send({ embeds: [feedbackEmbed] });
+            } else {
+                console.error(':x: Feedback channel not found or is not a text channel.');
+            }
+            await interaction.reply({ content: `Thank you for your feedback **${interaction.user.tag}**`, ephemeral: true });
+        }
+    }
+});

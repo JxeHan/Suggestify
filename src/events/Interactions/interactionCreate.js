@@ -51,7 +51,7 @@ module.exports = {
         } catch (error) {
             console.error(error);
 
-            await interaction.reply({
+            await interaction.editReply({
                 content: config.interactionErrorReply,
                 ephemeral: true
             });
